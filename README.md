@@ -14,6 +14,9 @@ The path to the FFMPEG executable must be in your `PATH` environment variable, s
 
 Next, download the latest `orfondl` executable for your operating system from the [release page](https://github.com/badlogic/orfondl/releases). Also make sure its path is in your `PATH` environment variable.
 
+> **Note** on macOS and Linux run `chmod a+x <executable>` before launching the executable
+> **Note** on macOS you will see the infamous "You want to run software on your computer? Not without a silly dance!" dialog after the first run. Open `Privacy and Security`, scroll down and press "Allow" or whatever the current flavor of this idiocy is. The run the executable again.
+
 ## Downloading a video
 
 1. Go to the video in your browser on ORF ON and copy the URL from the address bar.
