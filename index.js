@@ -170,7 +170,7 @@ function extractUrls(text) {
     "__audio.mp4",
     "-c",
     "copy",
-    "output.mp4",
+    output,
   ]);
 
   ffmpeg.stdout.on("data", (data) => {
