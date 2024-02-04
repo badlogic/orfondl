@@ -1,0 +1,14 @@
+FROM docker.io/node:21-bookworm-slim
+LABEL org.opencontainers.image.authors="toughIQ@gmail.com"
+
+RUN apt update && apt upgrade -y && apt install -y git ffmpeg
+
+RUN git clone https://github.com/badlogic/orfondl.git \
+    && cd orfondl \
+    && npm install
+    
+RUN mkdir /download    
+
+COPY entrypoint.sh /
+
+ENTRYPOINT ["/entrypoint.sh"]
