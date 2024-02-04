@@ -17,7 +17,7 @@ async function downloadAndAppendFile(url, dest) {
   }
 }
 
-const downloadStream = async (
+const writeStreamToFile = async (
   baseUrl,
   templates,
   representation,
@@ -63,14 +63,44 @@ function extractUrls(text) {
   return urls;
 }
 
-(async () => {
-  if (process.argv.length < 3) {
-    console.log("orfondl <video-url>");
-    process.exit(-1);
-  }
-  const url = process.argv[2];
-  let output = process.argv[3];
+async function mergeVideoAndAudio(videoFile, audioFile, output) {
+  console.log(`Merging ${videoFile} and ${audioFile} into ${output}`);
+  return new Promise((resolve, reject) => {
+    const ffmpeg = spawn("ffmpeg", [
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      videoFile,
+      "-i",
+      audioFile,
+      "-c",
+      "copy",
+      output,
+    ]);
 
+    ffmpeg.stdout.on("data", (data) => {
+      console.log(`stdout: ${data}`);
+    });
+
+    ffmpeg.stderr.on("data", (data) => {
+      console.error(`stderr: ${data}`);
+    });
+
+    ffmpeg.on("close", (code) => {
+      if (code === 0) {
+        fs.rmSync(videoFile);
+        fs.rmSync(audioFile);
+        console.log(`Done`);
+        resolve();
+      } else {
+        reject(new Error(`ffmpeg exited with code ${code}`));
+      }
+    });
+  });
+}
+
+async function downloadVideo(url, output) {
   const response = await fetch(url);
   if (!response.ok) {
     console.error("Could not fetch video page");
@@ -79,11 +109,7 @@ function extractUrls(text) {
   const html = await response.text();
   const titleMatch = html.match(/<title>(.*?)<\/title>/i);
   const title = titleMatch ? titleMatch[1] : undefined;
-  if (!output) output = title + ".mp4";
-  if (!output) {
-    console.error("Please specify an output file name.");
-    process.exit(-1);
-  }
+
   const urls = extractUrls(html).filter((url) => true);
   if (urls.length == 0) {
     console.error("Could not find video manifest.mpd");
@@ -109,6 +135,13 @@ function extractUrls(text) {
   }
   const xml = await xmlResponse.text();
   const manifest = await xml2js.parseStringPromise(xml);
+
+  const publishedDate = manifest.MPD.$.publishTime.slice(0, 10);
+  if (!output) output = publishedDate + " " + title + ".mp4";
+  if (!output) {
+    console.error("Please specify an output file name.");
+    process.exit(-1);
+  }
 
   const videoSet = manifest.MPD.Period[0].AdaptationSet[0];
   const videoRepresentations = videoSet.Representation;
@@ -152,48 +185,40 @@ function extractUrls(text) {
   console.log(audioRepresentation);
 
   const baseUrl = manifestUrl.replaceAll("/manifest.mpd", "/");
+  const videoFile = "__" + output + ".video";
+  const audioFile = "__" + output + ".audio";
   await Promise.all([
-    downloadStream(
+    writeStreamToFile(
       baseUrl,
       videoTemplates,
       videoRepresentation,
       videoTimeline,
-      "__video.mp4"
+      videoFile
     ),
-    downloadStream(
+    writeStreamToFile(
       baseUrl,
       audioTemplates,
       audioRepresentation,
       audioTimeline,
-      "__audio.mp4"
+      audioFile
     ),
   ]);
-  console.log("Merging streams");
-  const ffmpeg = spawn("ffmpeg", [
-    "-loglevel",
-    "error",
-    "-y",
-    "-i",
-    "__video.mp4",
-    "-i",
-    "__audio.mp4",
-    "-c",
-    "copy",
-    output,
-  ]);
+  await mergeVideoAndAudio(videoFile, audioFile, output);
+}
 
-  ffmpeg.stdout.on("data", (data) => {
-    console.log(`stdout: ${data}`);
-  });
-
-  ffmpeg.stderr.on("data", (data) => {
-    console.error(`stderr: ${data}`);
-  });
-
-  ffmpeg.on("close", (code) => {
-    fs.rmSync("__video.mp4");
-    fs.rmSync("__audio.mp4");
-    console.log(`Done`);
-    process.exit(code);
-  });
+(async () => {
+  if (process.argv.length < 3) {
+    console.log("orfondl <video-url>");
+    process.exit(-1);
+  }
+  const urlOrFile = process.argv[2];
+  let output = process.argv[3];
+  if (urlOrFile.startsWith("http")) {
+    downloadVideo(urlOrFile, output);
+  } else {
+    const urls = fs.readFileSync(urlOrFile, "utf-8").split("\n");
+    for (const url of urls) {
+      downloadVideo(url);
+    }
+  }
 })();
