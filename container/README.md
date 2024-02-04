@@ -14,7 +14,7 @@ where `/my/download/directory` is the path where you want your resulting videos 
 
 ## Running multiple downloads at once
 
-Currently there is no mechanism to provide a list of download URLs. But you can invoke multiple download instances at by `daemonizing` each container runtime.
+Currently there is no mechanism to provide a list of download URLs. But you can invoke multiple download instances at by `daemonizing` each container at runtime with `-d` and removing the `-it` parameter.
 
 Eg:
 
