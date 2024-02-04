@@ -11,3 +11,7 @@ change into `container` directory of `orfondl` project.
 `podman run -it --rm -v /my/download/directory:/download:z orfondl:latest https://on.orf.at/video/14212146`
 where `/my/download/directory` is the path where you want your resulting videos stored and `https://on.orf.at/video/14212146` is the URL of the desired video.
 
+## inner workings
+
+Since `output.mp4` is currently hardcoded as output filename this container does a file move and rename at the end, so the resulting video is stored with the video ID as filename within the `download` directory.
+
