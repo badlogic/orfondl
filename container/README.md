@@ -13,10 +13,12 @@ where `/my/download/directory` is the path where you want your resulting videos 
 
 ## Running multiple downloads at once
 
-Currently there is no mechanism to provide a list of download URLs. But you can invoke multiple download instances at by `deamonizing` each container runtime.
+Currently there is no mechanism to provide a list of download URLs. But you can invoke multiple download instances at by `daemonizing` each container runtime.
 
 Eg:
+
 `podman run -d --rm -v /my/download/directory:/download:z docker.io/toughiq/orfondl:latest https://on.orf.at/video/14202586/soko-donau-zuendstoff`
+
 `podman run -d --rm -v /my/download/directory:/download:z docker.io/toughiq/orfondl:latest https://on.orf.at/video/14211599/soko-donau-schachmatt`
 
 You can check the progress via:
