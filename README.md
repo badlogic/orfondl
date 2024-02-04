@@ -21,7 +21,7 @@ npm install
 You can then execute the program like this:
 
 ```
-node index.js <video-url> <output-file.mp4>
+node index.js <video-url> <output-file.mp4>?
 ```
 
 E.g.
@@ -29,3 +29,5 @@ E.g.
 ```
 node index.js https://on.orf.at/video/14211223 output.mp4
 ```
+
+You can also omit the output file name, in which case the title of the video + the suffix ".mp4" will be used for the output file.

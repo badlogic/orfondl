@@ -64,19 +64,27 @@ function extractUrls(text) {
 }
 
 (async () => {
-  if (process.argv.length != 4) {
-    console.log("orfondl <video-url> <output-file>");
+  if (process.argv.length < 3) {
+    console.log("orfondl <video-url>");
     process.exit(-1);
   }
   const url = process.argv[2];
-  const output = process.argv[3];
+  let output = process.argv[3];
 
   const response = await fetch(url);
   if (!response.ok) {
     console.error("Could not fetch video page");
     process.exit(-1);
   }
-  const urls = extractUrls(await response.text()).filter((url) => true);
+  const html = await response.text();
+  const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+  const title = titleMatch ? titleMatch[1] : undefined;
+  if (!output) output = title + ".mp4";
+  if (!output) {
+    console.error("Please specify an output file name.");
+    process.exit(-1);
+  }
+  const urls = extractUrls(html).filter((url) => true);
   if (urls.length == 0) {
     console.error("Could not find video manifest.mpd");
     process.exit(-1);
@@ -139,6 +147,7 @@ function extractUrls(text) {
     (s) => s.$
   );
 
+  console.log(`Saving to '${output}'`);
   console.log(videoRepresentation);
   console.log(audioRepresentation);
 
