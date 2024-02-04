@@ -37,6 +37,11 @@ jobs:
           GOOS=darwin GOARCH=amd64 go build -o dist/orfondl-macos-amd64 ./...
         shell: bash
 
+      - name: Build binary for macOS arm64
+        run: |
+          GOOS=darwin GOARCH=arm64 go build -o dist/orfondl-macos-arm64 ./...
+        shell: bash
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -77,4 +82,14 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/orfondl-macos-amd64
           asset_name: orfondl-macos-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload macOS ARM64 Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/orfondl-macos-arm64
+          asset_name: orfondl-macos-arm64
           asset_content_type: application/octet-stream
