@@ -2,7 +2,7 @@
 
 ## Build container image
 
-change into `container` directory of `orfondl project.
+change into `container` directory of `orfondl` project.
 
 `podman build -t orfondl:latest .`
 
