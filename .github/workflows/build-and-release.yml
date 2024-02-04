@@ -11,13 +11,8 @@ permissions:
   actions: write
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        go-version: [1.18.x]
+  build-and-release:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -25,30 +20,22 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: '1.18.x'
 
-      - name: Build binary
-        run: go build -o orfondl-${{ matrix.os }}-${{ matrix.go-version }} ./...
+      - name: Build binary for Linux
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o dist/orfondl-linux-amd64 ./...
         shell: bash
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: orfondl-${{ matrix.os }}
-          path: orfondl-${{ matrix.os }}-${{ matrix.go-version }}
+      - name: Build binary for Windows
+        run: |
+          GOOS=windows GOARCH=amd64 go build -o dist/orfondl-windows-amd64.exe ./...
+        shell: bash
 
-  release:
-    name: Create Release
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: dist
+      - name: Build binary for macOS
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -o dist/orfondl-macos-amd64 ./...
+        shell: bash
 
       - name: Create Release
         id: create_release
@@ -60,35 +47,34 @@ jobs:
           release_name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
-          body: |
-            Release of version ${{ github.ref_name }}
+          body: Release of version ${{ github.ref_name }}
 
-      - name: Upload Release Asset for Ubuntu
+      - name: Upload Linux Binary
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/orfondl-ubuntu-latest-${{ matrix.go-version }}
-          asset_name: orfondl-linux
+          asset_path: ./dist/orfondl-linux-amd64
+          asset_name: orfondl-linux-amd64
           asset_content_type: application/octet-stream
 
-      - name: Upload Release Asset for Windows
+      - name: Upload Windows Binary
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/orfondl-windows-latest-${{ matrix.go-version }}
-          asset_name: orfondl-windows.exe
+          asset_path: ./dist/orfondl-windows-amd64.exe
+          asset_name: orfondl-windows-amd64.exe
           asset_content_type: application/octet-stream
 
-      - name: Upload Release Asset for macOS
+      - name: Upload macOS Binary
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/orfondl-macos-latest-${{ matrix.go-version }}
-          asset_name: orfondl-macos
+          asset_path: ./dist/orfondl-macos-amd64
+          asset_name: orfondl-macos-amd64
           asset_content_type: application/octet-stream
